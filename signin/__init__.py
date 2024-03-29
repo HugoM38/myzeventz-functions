@@ -1,7 +1,7 @@
+import json
 import azure.functions as func
 import os
 import pymongo
-import json
 import bcrypt  
 
 def main(req: func.HttpRequest) -> func.HttpResponse:
@@ -13,10 +13,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # Vérifiez si l'email et le mot de passe sont fournis
         if not email or not password:
-            return func.HttpResponse(
-                "Please provide both email and password.",
-                status_code=400
-            )
+            return func.HttpResponse(json.dumps({
+                "signin": "failed",
+                "message": "Please provide an email and a password."
+                }), status_code=400, mimetype='application/json')
             
         # Encodage du mot de passe en bytes
         password = password.encode('utf-8')
@@ -32,11 +32,24 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         if user:
             # Vérifier le mot de passe
             if bcrypt.checkpw(password, user['password']):
-                return func.HttpResponse("User logged in successfully.", status_code=200)
+                return func.HttpResponse(json.dumps({
+                    "signin": "success",
+                    "user": {
+                        "username": user['username'],
+                        "email": user['email'],
+                        "role": user['role']
+                    }
+                    }), status_code=200, mimetype='application/json')
             else:
-                return func.HttpResponse("Incorrect password.", status_code=401)
+                return func.HttpResponse(json.dumps({
+                    "signin": "failed",
+                    "message": "Incorrect password."
+                    }), status_code=401, mimetype='application/json')
         else:
-            return func.HttpResponse("User not found.", status_code=404)
+            return func.HttpResponse(json.dumps({
+                "signin": "failed",
+                "message": "User with the provided email does not exist."
+                }), status_code=404, mimetype='application/json')
 
     except Exception as e:
         return func.HttpResponse(f"Error during sign-in process: {str(e)}", status_code=500)

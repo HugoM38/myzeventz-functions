@@ -1,3 +1,4 @@
+import json
 import azure.functions as func
 import os
 import pymongo
@@ -13,10 +14,10 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # Vérifier si toutes les données nécessaires sont présentes
         if not all([username, email, password]):
-            return func.HttpResponse(
-                "Please provide a username, email and a password.",
-                status_code=400
-            )
+            return func.HttpResponse(json.dumps({
+                "signup": "failed",
+                "message": "Please provide a username, an email and a password."
+                }), status_code=400, mimetype='application/json')
             
          # Hashage du mot de passe
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
@@ -28,18 +29,27 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
 
         # Vérifier si un utilisateur avec le même email existe déjà
         if collection.find_one({"email": email}):
-            return func.HttpResponse(
-                "A user with the same email already exists.",
-                status_code=400
-            )
+            return func.HttpResponse(json.dumps({
+                "signup": "failed",
+                "message": "User with the same email already exists."
+                }), status_code=409, mimetype='application/json')
 
         # Insérer le nouvel utilisateur
-        collection.insert_one({
+        user = {
             "username": username,
             "email": email,
-            "password": hashed_password
-        })
+            "password": hashed_password,
+            "role": "user"
+        }
+        collection.insert_one(user)
 
-        return func.HttpResponse("User created with sucess", status_code=201)
+        return func.HttpResponse(json.dumps({
+            "signup": "success",
+            "user": {
+                "username": username,
+                "email": email,
+                "role": "user"
+            }
+            }), status_code=201, mimetype='application/json')
     except Exception as e:
         return func.HttpResponse(f"Error during the creation of user: {str(e)}", status_code=500)
