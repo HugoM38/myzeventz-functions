@@ -44,7 +44,8 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 }), status_code=409, mimetype='application/json')
 
         # Insérer le nouvel événement
-        event = {
+        
+        events_collection.insert_one({
             "name": name,
             "description": description,
             "organizer": organizer_email,
@@ -52,12 +53,20 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "event_type": event_type, 
             "location": location,  
             "participant_limit": participant_limit  
-        }
-        events_collection.insert_one(event)
+        })
 
         return func.HttpResponse(json.dumps({
             "event_creation": "success",
-            "event": event  
+            "event": {
+                "name": name,
+                "description": description,
+                "organizer": organizer_email,
+                "date": date,
+                "event_type": event_type, 
+                "location": location,  
+                "participant_limit": participant_limit  
+            
+            }  
             }), status_code=201, mimetype='application/json')
     except Exception as e:
         return func.HttpResponse(f"Error during the creation of event: {str(e)}", status_code=500)
