@@ -11,12 +11,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         description = request.get('description')
         organizer_email = request.get('organizer')
         date = request.get('date')
+        event_type = request.get('event_type')  # Nouveau champ pour le type d'événement
+        location = request.get('location')  # Nouveau champ pour le lieu
+        participant_limit = request.get('participant_limit')  # Nouveau champ pour la limite de participants
 
         # Vérifier si toutes les données nécessaires sont présentes
-        if not all([name, description, organizer_email, date]):
+        if not all([name, description, organizer_email, date, event_type, location, participant_limit]):
             return func.HttpResponse(json.dumps({
                 "event_creation": "failed",
-                "message": "Please provide a name, description, organizer, and date."
+                "message": "Please provide all required fields: name, description, organizer, date, event_type, location, and participant_limit."
                 }), status_code=400, mimetype='application/json')
 
         # Connection à Cosmos DB
@@ -46,17 +49,15 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "description": description,
             "organizer": organizer_email,
             "date": date,
+            "event_type": event_type,  # Ajout du type d'événement
+            "location": location,  # Ajout du lieu
+            "participant_limit": participant_limit  # Ajout de la limite de participants
         }
         events_collection.insert_one(event)
 
         return func.HttpResponse(json.dumps({
             "event_creation": "success",
-            "event": {
-                "name": name,
-                "description": description,
-                "organizer": organizer_email,
-                "date": date
-            }
+            "event": event  # Retourner l'objet événement entier pour simplifier
             }), status_code=201, mimetype='application/json')
     except Exception as e:
         return func.HttpResponse(f"Error during the creation of event: {str(e)}", status_code=500)
