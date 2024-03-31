@@ -10,16 +10,17 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
         name = request.get('name')
         description = request.get('description')
         organizer_email = request.get('organizer')
+        image_url = request.get('image_url')
         date = request.get('date')
         event_type = request.get('event_type') 
         location = request.get('location') 
         participant_limit = request.get('participant_limit') 
 
         # Vérifier si toutes les données nécessaires sont présentes
-        if not all([name, description, organizer_email, date, event_type, location, participant_limit]):
+        if not all([name, description, organizer_email, date, event_type, location, participant_limit, image_url]):
             return func.HttpResponse(json.dumps({
                 "event_creation": "failed",
-                "message": "Please provide all required fields: name, description, organizer, date, event_type, location, and participant_limit."
+                "message": "Please provide all required fields: name, description, organizer, date, image_url, event_type, location, and participant_limit."
                 }), status_code=400, mimetype='application/json')
 
         # Connection à Cosmos DB
@@ -50,6 +51,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
             "description": description,
             "organizer": organizer_email,
             "date": date,
+            "image_url": image_url,
             "event_type": event_type, 
             "location": location,  
             "participant_limit": participant_limit  
@@ -62,6 +64,7 @@ def main(req: func.HttpRequest) -> func.HttpResponse:
                 "description": description,
                 "organizer": organizer_email,
                 "date": date,
+                "image_url": image_url,
                 "event_type": event_type, 
                 "location": location,  
                 "participant_limit": participant_limit  
